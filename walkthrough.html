@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BESS Design — Step-by-Step Walkthrough</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #fff;
+            color: #222;
+            line-height: 1.8;
+            padding: 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        h2 {
+            font-size: 1.1rem;
+            margin: 2rem 0 0.75rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid #ddd;
+        }
+        h3 { font-size: 0.95rem; color: #555; margin-top: 1rem; }
+        .subtitle { color: #666; font-size: 0.9rem; margin-bottom: 2rem; }
+        p { margin-bottom: 0.75rem; color: #444; }
+        .math {
+            background: #f7f7f7;
+            border-left: 3px solid #888;
+            padding: 0.75rem 1rem;
+            margin: 0.75rem 0;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.9rem;
+            color: #222;
+            overflow-x: auto;
+        }
+        .math .label { color: #666; font-size: 0.8rem; display: block; margin-bottom: 0.25rem; }
+        .math .result { color: #1a7f37; font-weight: 700; }
+        .math .op { color: #888; }
+        .ref {
+            font-size: 0.7rem;
+            color: #0969da;
+            vertical-align: super;
+            cursor: help;
+        }
+        .input-inline {
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            padding: 0.15rem 0.5rem;
+            color: #b35900;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            width: 90px;
+            text-align: center;
+        }
+        .input-inline:focus { outline: none; border-color: #888; }
+        select.input-inline { width: auto; }
+        .inputs-bar {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+        }
+        .inputs-bar label {
+            font-size: 0.8rem;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .step-num {
+            display: inline-block;
+            background: #555;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.75rem;
+            width: 22px; height: 22px;
+            line-height: 22px;
+            text-align: center;
+            border-radius: 50%;
+            margin-right: 0.4rem;
+        }
+        .note {
+            background: #fffbeb;
+            border-left: 3px solid #d97706;
+            padding: 0.5rem 0.75rem;
+            margin: 0.5rem 0;
+            font-size: 0.85rem;
+            color: #92400e;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0.75rem 0;
+            font-size: 0.85rem;
+        }
+        th {
+            background: #f3f3f3;
+            color: #333;
+            padding: 0.5rem;
+            text-align: left;
+            border-bottom: 2px solid #ddd;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+        td {
+            padding: 0.4rem 0.5rem;
+            border-bottom: 1px solid #eee;
+            color: #444;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+        td.pos { color: #1a7f37; }
+        td.neg { color: #cf222e; }
+        .refs {
+            margin-top: 3rem;
+            padding-top: 1rem;
+            border-top: 1px solid #ddd;
+        }
+        .refs h2 { margin-top: 0; }
+        .refs ol { padding-left: 1.5rem; }
+        .refs li { font-size: 0.8rem; color: #555; margin-bottom: 0.5rem; }
+        .refs a { color: #0969da; text-decoration: none; }
+        .refs a:hover { text-decoration: underline; }
+        footer { text-align: center; color: #999; font-size: 0.7rem; margin-top: 2rem; }
+    </style>
+</head>
+<body>
+
+<h1>&#9889; BESS Design — Step-by-Step Math Walkthrough</h1>
+<p class="subtitle">Every calculation explained. Change any yellow input and all math updates instantly.</p>
+
+<div class="inputs-bar">
+    <label>Annual Load: <input type="number" class="input-inline" id="inLoad" value="120000" min="1000" step="1000"> kWh</label>
+    <label>Solar Array: <input type="number" class="input-inline" id="inSolar" value="191.4" min="1" step="0.1"> kW DC</label>
+    <label>Islanding: <input type="number" class="input-inline" id="inDays" value="3" min="1" max="14" style="width:50px"> days</label>
+    <label>DoD: <input type="number" class="input-inline" id="inDoD" value="80" min="50" max="100" style="width:55px">%</label>
+    <label>Efficiency: <input type="number" class="input-inline" id="inRTE" value="95" min="70" max="99" style="width:55px">%</label>
+    <label>Container:
+        <select class="input-inline" id="inContainer">
+            <option value="5365">BYD MC Cube (5,365 kWh)</option>
+            <option value="6432">BYD MC Cube-T (6,432 kWh)</option>
+            <option value="5000">Tesla Megapack 3 (5,000 kWh)</option>
+            <option value="3354">CATL EnerOne (3,354 kWh)</option>
+        </select>
+    </label>
+    <label>Cost: $<input type="number" class="input-inline" id="inCost" value="350" min="50" step="10" style="width:65px">/kWh</label>
+    <label>Elec Rate: $<input type="number" class="input-inline" id="inElec" value="0.2393" min="0.01" step="0.01" style="width:75px">/kWh</label>
+</div>
+
+<div id="walkthrough"></div>
+
+<div class="refs">
+    <h2>References</h2>
+    <ol>
+        <li><strong>User-specified design parameters</strong> — Annual load: 120 MWh, Solar: 191.4 kW DC, 3-day islanding, LiFePO4</li>
+        <li><strong>LiFePO4 battery characteristics</strong> — 80% recommended DoD, ~95% round-trip efficiency.
+            <br><a href="https://www.nrel.gov/docs/fy25osti/93281.pdf" target="_blank">NREL — Cost Projections for Utility-Scale Battery Storage (2025)</a></li>
+        <li><strong>BESS container specs</strong> — BYD MC Cube: 5,365 kWh, 6058×2438×2896 mm; BYD MC Cube-T: 6,432 kWh; Tesla Megapack 3: 5,000 kWh; CATL EnerOne: 3,354 kWh.
+            <br><a href="https://www.bydenergy.com/en/productDetails/Utility-Scale/MC_Cube-T_BESS" target="_blank">BYD MC Cube-T Datasheet</a></li>
+        <li><strong>Boston, MA solar radiation</strong> — Monthly kWh/m²/day from Solar Energy Local.
+            <br><a href="https://www.solarenergylocal.com/states/massachusetts/boston/" target="_blank">Solar Energy Local — Boston, MA</a></li>
+        <li><strong>MA commercial electricity rate</strong> — $0.2393/kWh avg (March 2026).
+            <br><a href="https://www.chooseenergy.com/electricity-rates-by-state/" target="_blank">Choose Energy — Rates by State</a></li>
+        <li><strong>MA SMART 3.0</strong> — Base rate: $0.2821/kWh; Storage multiplier: $0.0265/kWh.
+            <br><a href="https://www.mass.gov/info-details/smart-30-program-details" target="_blank">Mass.gov — SMART 3.0 Details</a></li>
+        <li><strong>BESS installed cost</strong> — $280–$580/kWh commercial (2025).
+            <br><a href="https://www.nrel.gov/docs/fy25osti/93281.pdf" target="_blank">NREL — Battery Storage Cost Projections</a></li>
+        <li><strong>NFPA 855</strong> — 3 ft ESS spacing (§15.5), 10 ft egress setback, 20 ft fire access.
+            <br><a href="https://www.mayfield.energy/technical-articles/code-corner-nfpa-855-ess-unit-spacing-limitations/" target="_blank">Mayfield Renewables — NFPA 855 Spacing</a></li>
+        <li><strong>527 CMR 1.00</strong> — MA fire code, Ch. 52 for ESS &gt; 20 kWh.
+            <br><a href="https://up.codes/viewer/massachusetts/nfpa-1-2015/chapter/52/stationary-storage-battery-systems" target="_blank">UpCodes — 527 CMR Ch. 52</a></li>
+    </ol>
+</div>
+
+<footer>For preliminary design purposes only. Consult licensed engineers for final design.</footer>
+
+<script>
+// Monthly solar data for Boston, MA [Ref 4]
+const SOLAR = {
+    labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    radiation: [3.92, 4.66, 5.01, 5.42, 5.54, 5.64, 6.01, 5.77, 5.51, 4.56, 3.57, 3.28],
+    days: [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+};
+
+const CONTAINERS = {
+    5365: { name:'BYD MC Cube', kWh:5365, lM:6.06, wM:2.44 },
+    6432: { name:'BYD MC Cube-T', kWh:6432, lM:6.06, wM:2.44 },
+    5000: { name:'Tesla Megapack 3', kWh:5000, lM:6.06, wM:2.44 },
+    3354: { name:'CATL EnerOne', kWh:3354, lM:6.06, wM:2.44 }
+};
+
+const M2FT = 3.28084;
+const f = (n, d=0) => Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+
+function render() {
+    const load = parseFloat(document.getElementById('inLoad').value) || 120000;
+    const solar = parseFloat(document.getElementById('inSolar').value) || 191.4;
+    const days = parseInt(document.getElementById('inDays').value) || 3;
+    const dod = parseInt(document.getElementById('inDoD').value) || 80;
+    const rte = parseInt(document.getElementById('inRTE').value) || 95;
+    const cKey = document.getElementById('inContainer').value;
+    const cost = parseFloat(document.getElementById('inCost').value) || 350;
+    const elec = parseFloat(document.getElementById('inElec').value) || 0.2393;
+
+    const c = CONTAINERS[cKey];
+
+    // Calculations
+    const dailyLoad = load / 365;
+    const islandingNeed = dailyLoad * days;
+    const nameplate = islandingNeed / (dod / 100);
+    const containers = Math.ceil(nameplate / c.kWh);
+    const totalCap = containers * c.kWh;
+    const usable = totalCap * (dod / 100);
+    const avgPSH = 4.91;
+    const dailySolar = solar * avgPSH * (rte / 100);
+    const annualSolar = SOLAR.radiation.reduce((sum, rad, i) => sum + solar * rad * (rte/100) * SOLAR.days[i], 0);
+    const peakLoad = (dailyLoad / 24) * 2.5;
+    const inverter = Math.ceil(Math.max(peakLoad, solar) / 50) * 50;
+    const totalCost = totalCap * cost;
+    const smartBase = annualSolar * 0.2821;
+    const smartAdder = annualSolar * 0.0265;
+    const selfConsumed = Math.min(annualSolar, load);
+    const costOffset = selfConsumed * elec;
+    const totalRevenue = smartBase + smartAdder + costOffset;
+    const payback = totalCost / totalRevenue;
+
+    // Site layout
+    const cLft = c.lM * M2FT;
+    const cWft = c.wM * M2FT;
+    const rows = containers <= 3 ? 1 : 2;
+    const cols = containers <= 3 ? containers : Math.ceil(containers / 2);
+    const padW = cols * cLft + (cols-1) * 3;
+    const padD = rows * cWft + (rows > 1 ? 3 : 0);
+    const totalW = 10 + padW + 10;
+    const totalD = 20 + 10 + padD + 10;
+
+    // Monthly table
+    let monthRows = '';
+    SOLAR.labels.forEach((m, i) => {
+        const mSolar = solar * SOLAR.radiation[i] * (rte/100) * SOLAR.days[i];
+        const mLoad = dailyLoad * SOLAR.days[i];
+        const surplus = mSolar - mLoad;
+        const cls = surplus >= 0 ? 'pos' : 'neg';
+        monthRows += `<tr>
+            <td>${m}</td>
+            <td>${SOLAR.radiation[i]}</td>
+            <td>${SOLAR.days[i]}</td>
+            <td>${f(solar * SOLAR.radiation[i] * (rte/100), 1)}</td>
+            <td>${f(mSolar, 0)}</td>
+            <td>${f(mLoad, 0)}</td>
+            <td class="${cls}">${surplus >= 0 ? '+' : ''}${f(surplus, 0)}</td>
+        </tr>`;
+    });
+
+    document.getElementById('walkthrough').innerHTML = `
+
+<h2><span class="step-num">1</span> Daily Average Load</h2>
+<p>We start with your annual energy usage and find the average daily consumption. <sup class="ref">[1]</sup></p>
+<div class="math">
+    <span class="label">Average Daily Load</span>
+    ${f(load, 0)} kWh/year <span class="op">÷</span> 365 days <span class="op">=</span> <span class="result">${f(dailyLoad, 2)} kWh/day</span>
+</div>
+
+<h2><span class="step-num">2</span> Islanding Energy Requirement</h2>
+<p>For ${days}-day islanding (operating off-grid), the battery must cover ${days} full days of average load. This is the <em>worst case</em> — assumes zero solar production (e.g., blizzard, heavy clouds). <sup class="ref">[1]</sup></p>
+<div class="math">
+    <span class="label">Islanding Energy</span>
+    ${f(dailyLoad, 2)} kWh/day <span class="op">×</span> ${days} days <span class="op">=</span> <span class="result">${f(islandingNeed, 1)} kWh</span>
+</div>
+
+<h2><span class="step-num">3</span> Battery Nameplate Capacity</h2>
+<p>LiFePO4 batteries should not be discharged to 0%. A ${dod}% depth-of-discharge (DoD) is recommended to preserve cycle life. So we need <em>more</em> nameplate capacity than the usable energy. <sup class="ref">[2]</sup></p>
+<div class="math">
+    <span class="label">Nameplate Capacity = Islanding Need ÷ DoD</span>
+    ${f(islandingNeed, 1)} kWh <span class="op">÷</span> ${dod}% <span class="op">=</span> ${f(islandingNeed, 1)} <span class="op">÷</span> ${(dod/100).toFixed(2)} <span class="op">=</span> <span class="result">${f(nameplate, 1)} kWh</span>
+</div>
+<div class="note">This means ${f(nameplate, 0)} kWh of battery, but only ${f(islandingNeed, 0)} kWh (${dod}%) is actually used. The remaining ${100-dod}% is reserve to protect battery longevity.</div>
+
+<h2><span class="step-num">4</span> Number of Containers</h2>
+<p>Commercial BESS comes in standard 20-ft ISO containers. We selected the <strong>${c.name}</strong> at ${f(c.kWh, 0)} kWh per container. <sup class="ref">[3]</sup></p>
+<div class="math">
+    <span class="label">Containers = ⌈ Nameplate ÷ Container Capacity ⌉ (round up)</span>
+    ⌈ ${f(nameplate, 1)} kWh <span class="op">÷</span> ${f(c.kWh, 0)} kWh ⌉ <span class="op">=</span> ⌈ ${(nameplate / c.kWh).toFixed(3)} ⌉ <span class="op">=</span> <span class="result">${containers} container${containers !== 1 ? 's' : ''}</span>
+</div>
+<div class="math">
+    <span class="label">Total Installed Capacity</span>
+    ${containers} <span class="op">×</span> ${f(c.kWh, 0)} kWh <span class="op">=</span> <span class="result">${f(totalCap, 0)} kWh (${f(totalCap/1000, 2)} MWh)</span>
+</div>
+<div class="math">
+    <span class="label">Actual Usable Capacity (at ${dod}% DoD)</span>
+    ${f(totalCap, 0)} kWh <span class="op">×</span> ${dod}% <span class="op">=</span> <span class="result">${f(usable, 0)} kWh</span>
+</div>
+
+<h2><span class="step-num">5</span> Solar Production Estimate</h2>
+<p>Your ${f(solar, 1)} kW DC solar array produces energy based on Boston, MA peak sun hours (PSH). We also factor in ${rte}% round-trip efficiency for energy that passes through the battery. <sup class="ref">[4]</sup></p>
+<div class="math">
+    <span class="label">Daily Solar Production (annual average, ${avgPSH} PSH)</span>
+    ${f(solar, 1)} kW <span class="op">×</span> ${avgPSH} hrs <span class="op">×</span> ${rte}% eff <span class="op">=</span> ${f(solar, 1)} <span class="op">×</span> ${avgPSH} <span class="op">×</span> ${(rte/100).toFixed(2)} <span class="op">=</span> <span class="result">${f(dailySolar, 1)} kWh/day</span>
+</div>
+<div class="math">
+    <span class="label">Annual Solar Production (using monthly PSH data)</span>
+    Sum of (${f(solar, 1)} kW × monthly PSH × ${rte}% × days/month) <span class="op">=</span> <span class="result">${f(annualSolar, 0)} kWh/year</span>
+</div>
+
+<h3 style="color:var(--text2); font-size:0.9rem; margin-top:1rem;">Monthly Breakdown</h3>
+<table>
+    <tr><th>Month</th><th>PSH</th><th>Days</th><th>Daily kWh</th><th>Monthly Solar</th><th>Monthly Load</th><th>Surplus/Deficit</th></tr>
+    ${monthRows}
+    <tr style="border-top:2px solid var(--border); font-weight:700;">
+        <td>TOTAL</td><td>—</td><td>365</td><td>—</td>
+        <td style="color:var(--amber)">${f(annualSolar, 0)}</td>
+        <td>${f(load, 0)}</td>
+        <td class="${annualSolar - load >= 0 ? 'pos' : 'neg'}">${annualSolar - load >= 0 ? '+' : ''}${f(annualSolar - load, 0)}</td>
+    </tr>
+</table>
+
+<h2><span class="step-num">6</span> Inverter Sizing</h2>
+<p>The inverter must handle peak demand (estimated at 2.5× average hourly load) or the solar array — whichever is larger. Rounded up to the nearest 50 kW.</p>
+<div class="math">
+    <span class="label">Average Hourly Load</span>
+    ${f(dailyLoad, 2)} kWh/day <span class="op">÷</span> 24 hrs <span class="op">=</span> ${f(dailyLoad/24, 2)} kW
+</div>
+<div class="math">
+    <span class="label">Estimated Peak Demand (2.5× factor)</span>
+    ${f(dailyLoad/24, 2)} kW <span class="op">×</span> 2.5 <span class="op">=</span> ${f(peakLoad, 1)} kW
+</div>
+<div class="math">
+    <span class="label">Inverter Size = max(peak demand, solar) rounded up to 50 kW</span>
+    max(${f(peakLoad, 1)}, ${f(solar, 1)}) <span class="op">=</span> ${f(Math.max(peakLoad, solar), 1)} kW <span class="op">→</span> <span class="result">${f(inverter, 0)} kW</span>
+</div>
+
+<h2><span class="step-num">7</span> Site Layout & Footprint</h2>
+<p>NFPA 855 requires specific setbacks and spacing for outdoor BESS. <sup class="ref">[8]</sup></p>
+<div class="math">
+    <span class="label">Container footprint (each)</span>
+    ${f(cLft, 1)} ft <span class="op">×</span> ${f(cWft, 1)} ft <span class="op">=</span> ${f(cLft * cWft, 0)} sq ft
+</div>
+<div class="math">
+    <span class="label">Layout: ${containers} container${containers!==1?'s':''} in ${rows} row${rows!==1?'s':''} × ${cols} column${cols!==1?'s':''}</span>
+    Pad width: ${cols} <span class="op">×</span> ${f(cLft,1)}' <span class="op">+</span> ${cols-1} <span class="op">×</span> 3' spacing <span class="op">=</span> <span class="result">${f(padW, 1)} ft</span>
+    <br>Pad depth: ${rows} <span class="op">×</span> ${f(cWft,1)}' ${rows > 1 ? `<span class="op">+</span> 3' spacing` : ''} <span class="op">=</span> <span class="result">${f(padD, 1)} ft</span>
+</div>
+<div class="math">
+    <span class="label">Total site (with NFPA 855 setbacks)</span>
+    Width: 10' setback <span class="op">+</span> ${f(padW, 1)}' pad <span class="op">+</span> 10' setback <span class="op">=</span> <span class="result">${f(totalW, 1)} ft</span>
+    <br>Depth: 20' fire lane <span class="op">+</span> 10' setback <span class="op">+</span> ${f(padD, 1)}' pad <span class="op">+</span> 10' setback <span class="op">=</span> <span class="result">${f(totalD, 1)} ft</span>
+</div>
+<div class="math">
+    <span class="label">Total site footprint</span>
+    ${f(totalW, 1)} ft <span class="op">×</span> ${f(totalD, 1)} ft <span class="op">=</span> <span class="result">${f(totalW * totalD, 0)} sq ft</span>
+</div>
+
+<h2><span class="step-num">8</span> Financial Estimates</h2>
+<p>System cost, MA SMART incentives, and payback. <sup class="ref">[5][6][7]</sup></p>
+<div class="math">
+    <span class="label">Total System Cost</span>
+    ${f(totalCap, 0)} kWh <span class="op">×</span> $${f(cost, 0)}/kWh <span class="op">=</span> <span class="result">$${f(totalCost, 0)}</span>
+</div>
+<div class="math">
+    <span class="label">SMART Base Rate Revenue (solar production × $0.2821/kWh)</span>
+    ${f(annualSolar, 0)} kWh <span class="op">×</span> $0.2821 <span class="op">=</span> <span class="result">$${f(smartBase, 0)}/year</span>
+</div>
+<div class="math">
+    <span class="label">Storage Adder Revenue (solar production × $0.0265/kWh)</span>
+    ${f(annualSolar, 0)} kWh <span class="op">×</span> $0.0265 <span class="op">=</span> <span class="result">$${f(smartAdder, 0)}/year</span>
+</div>
+<div class="math">
+    <span class="label">Energy Cost Offset (solar self-consumption × electricity rate)</span>
+    min(${f(annualSolar, 0)}, ${f(load, 0)}) kWh <span class="op">×</span> $${elec.toFixed(4)} <span class="op">=</span> ${f(selfConsumed, 0)} <span class="op">×</span> $${elec.toFixed(4)} <span class="op">=</span> <span class="result">$${f(costOffset, 0)}/year</span>
+</div>
+<div class="math">
+    <span class="label">Total Annual Revenue</span>
+    $${f(smartBase, 0)} <span class="op">+</span> $${f(smartAdder, 0)} <span class="op">+</span> $${f(costOffset, 0)} <span class="op">=</span> <span class="result">$${f(totalRevenue, 0)}/year</span>
+</div>
+<div class="math">
+    <span class="label">Simple Payback Period</span>
+    $${f(totalCost, 0)} <span class="op">÷</span> $${f(totalRevenue, 0)}/year <span class="op">=</span> <span class="result">${f(payback, 1)} years</span>
+</div>
+
+<h2><span class="step-num">9</span> Summary</h2>
+<table>
+    <tr><th>Parameter</th><th>Value</th><th>Source</th></tr>
+    <tr><td>Daily Average Load</td><td>${f(dailyLoad, 2)} kWh/day</td><td>[1]</td></tr>
+    <tr><td>${days}-Day Islanding Need</td><td>${f(islandingNeed, 0)} kWh</td><td>[1]</td></tr>
+    <tr><td>Nameplate Battery Capacity</td><td>${f(nameplate, 0)} kWh (${f(nameplate/1000, 2)} MWh)</td><td>[2]</td></tr>
+    <tr><td>Containers</td><td>${containers} × ${c.name}</td><td>[3]</td></tr>
+    <tr><td>Total Installed Capacity</td><td>${f(totalCap, 0)} kWh (${f(totalCap/1000, 2)} MWh)</td><td>[3]</td></tr>
+    <tr><td>Usable Capacity (${dod}% DoD)</td><td>${f(usable, 0)} kWh</td><td>[2]</td></tr>
+    <tr><td>Daily Solar Production</td><td>${f(dailySolar, 0)} kWh/day</td><td>[4]</td></tr>
+    <tr><td>Annual Solar Production</td><td>${f(annualSolar, 0)} kWh/year</td><td>[4]</td></tr>
+    <tr><td>Inverter Size</td><td>${f(inverter, 0)} kW</td><td>Calculated</td></tr>
+    <tr><td>Site Footprint</td><td>${f(totalW, 1)}' × ${f(totalD, 1)}' = ${f(totalW * totalD, 0)} sq ft</td><td>[8]</td></tr>
+    <tr><td>Total System Cost</td><td>$${f(totalCost, 0)}</td><td>[7]</td></tr>
+    <tr><td>Annual Revenue</td><td>$${f(totalRevenue, 0)}/year</td><td>[5][6]</td></tr>
+    <tr><td>Simple Payback</td><td>${f(payback, 1)} years</td><td>Calculated</td></tr>
+</table>
+`;
+}
+
+// Attach listeners
+document.querySelectorAll('.input-inline').forEach(el => {
+    el.addEventListener('input', render);
+    el.addEventListener('change', render);
+});
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commercial BESS Design Dashboard — Massachusetts SMART</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<header>
+    <h1>&#9889; Commercial BESS Design Dashboard</h1>
+    <p class="subtitle">Hybrid Grid-Tied LiFePO4 System — Massachusetts SMART Incentive Eligible</p>
+    <a href="walkthrough.html" class="nav-link">View Step-by-Step Math Walkthrough &rarr;</a>
+</header>
+
+<main>
+
+    <!-- ====== SECTION 1: Adjustable Assumptions ====== -->
+    <section id="assumptions" class="panel">
+        <h2>Adjustable Assumptions</h2>
+        <div class="inputs-grid">
+            <div class="input-group">
+                <label for="annualLoad">Annual Energy Usage (kWh)</label>
+                <input type="number" id="annualLoad" value="120000" min="1000" step="1000">
+                <span class="ref-tag" data-ref="1">[1]</span>
+            </div>
+            <div class="input-group">
+                <label for="solarSize">Solar Array Size (kW DC)</label>
+                <input type="number" id="solarSize" value="191.4" min="1" step="0.1">
+                <span class="ref-tag" data-ref="1">[1]</span>
+            </div>
+            <div class="input-group">
+                <label for="islandingDays">Islanding Duration (days)</label>
+                <input type="range" id="islandingDays" min="1" max="7" value="3" step="1">
+                <output id="islandingDaysVal">3</output>
+                <span class="ref-tag" data-ref="1">[1]</span>
+            </div>
+            <div class="input-group">
+                <label for="dod">Depth of Discharge (%)</label>
+                <input type="range" id="dod" min="50" max="100" value="80" step="1">
+                <output id="dodVal">80%</output>
+                <span class="ref-tag" data-ref="2">[2]</span>
+            </div>
+            <div class="input-group">
+                <label for="containerCap">Battery Container Model</label>
+                <select id="containerCap">
+                    <option value="5365" data-name="BYD MC Cube" data-l="6.06" data-w="2.44" data-h="2.90" data-wt="4200">BYD MC Cube — 5,365 kWh</option>
+                    <option value="6432" data-name="BYD MC Cube-T" data-l="6.06" data-w="2.44" data-h="2.90" data-wt="5000">BYD MC Cube-T — 6,432 kWh</option>
+                    <option value="5000" data-name="Tesla Megapack 3" data-l="6.06" data-w="2.44" data-h="2.59" data-wt="4500">Tesla Megapack 3 — 5,000 kWh</option>
+                    <option value="3354" data-name="CATL EnerOne" data-l="6.06" data-w="2.44" data-h="2.90" data-wt="3800">CATL EnerOne — 3,354 kWh</option>
+                </select>
+                <span class="ref-tag" data-ref="3">[3]</span>
+            </div>
+            <div class="input-group">
+                <label for="peakSunHours">Avg Peak Sun Hours (MA)</label>
+                <input type="range" id="peakSunHours" min="3.0" max="5.5" value="4.91" step="0.01">
+                <output id="peakSunHoursVal">4.91</output>
+                <span class="ref-tag" data-ref="4">[4]</span>
+            </div>
+            <div class="input-group">
+                <label for="rte">Round-Trip Efficiency (%)</label>
+                <input type="range" id="rte" min="80" max="99" value="95" step="1">
+                <output id="rteVal">95%</output>
+                <span class="ref-tag" data-ref="2">[2]</span>
+            </div>
+            <div class="input-group">
+                <label for="elecRate">Electricity Rate ($/kWh)</label>
+                <input type="number" id="elecRate" value="0.2393" min="0.01" step="0.01">
+                <span class="ref-tag" data-ref="5">[5]</span>
+            </div>
+            <div class="input-group">
+                <label for="smartAdder">SMART Storage Adder ($/kWh)</label>
+                <input type="number" id="smartAdder" value="0.0265" min="0" step="0.001">
+                <span class="ref-tag" data-ref="6">[6]</span>
+            </div>
+            <div class="input-group">
+                <label for="installedCost">Installed Cost ($/kWh)</label>
+                <input type="number" id="installedCost" value="350" min="100" step="10">
+                <span class="ref-tag" data-ref="7">[7]</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====== SECTION 2: System Sizing Summary ====== -->
+    <section id="sizing" class="panel">
+        <h2>System Sizing Summary</h2>
+        <div class="cards-grid">
+            <div class="card">
+                <div class="card-label">Daily Avg Load</div>
+                <div class="card-value" id="cardDailyLoad">—</div>
+                <div class="card-unit">kWh/day</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Islanding Energy Need</div>
+                <div class="card-value" id="cardIslandingNeed">—</div>
+                <div class="card-unit">kWh</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Nameplate Capacity</div>
+                <div class="card-value" id="cardNameplate">—</div>
+                <div class="card-unit">kWh</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Usable Capacity</div>
+                <div class="card-value" id="cardUsable">—</div>
+                <div class="card-unit">kWh</div>
+            </div>
+            <div class="card highlight">
+                <div class="card-label">Containers Required</div>
+                <div class="card-value" id="cardContainers">—</div>
+                <div class="card-unit" id="cardContainerModel">—</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Inverter Size</div>
+                <div class="card-value" id="cardInverter">—</div>
+                <div class="card-unit">kW</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Daily Solar Production</div>
+                <div class="card-value" id="cardSolarDaily">—</div>
+                <div class="card-unit">kWh/day</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Annual Solar Production</div>
+                <div class="card-value" id="cardSolarAnnual">—</div>
+                <div class="card-unit">kWh/yr</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====== SECTION 3: Energy Flow Chart ====== -->
+    <section id="energy-chart" class="panel">
+        <h2>Monthly Energy Flow <span class="ref-tag" data-ref="4">[4]</span></h2>
+        <div class="chart-container">
+            <canvas id="energyFlowChart"></canvas>
+        </div>
+    </section>
+
+    <!-- ====== SECTION 4: Site Layout Schematic ====== -->
+    <section id="site-layout" class="panel">
+        <h2>Site Layout Schematic <span class="ref-tag" data-ref="8">[8]</span></h2>
+        <p class="note">NFPA 855 compliant layout — setbacks, spacing, and fire access shown. Dimensions update with container count.</p>
+        <div class="schematic-container">
+            <svg id="siteSchematic" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+        <div id="siteFootprintInfo" class="footprint-info"></div>
+    </section>
+
+    <!-- ====== SECTION 5: MA SMART Incentives ====== -->
+    <section id="incentives" class="panel">
+        <h2>MA SMART Incentives & Financial Summary</h2>
+        <div class="cards-grid financial">
+            <div class="card money">
+                <div class="card-label">Total System Cost</div>
+                <div class="card-value" id="cardTotalCost">—</div>
+                <div class="card-unit">USD</div>
+                <span class="ref-tag" data-ref="7">[7]</span>
+            </div>
+            <div class="card money">
+                <div class="card-label">SMART Base Rate Revenue</div>
+                <div class="card-value" id="cardSmartBase">—</div>
+                <div class="card-unit">$/year</div>
+                <span class="ref-tag" data-ref="6">[6]</span>
+            </div>
+            <div class="card money">
+                <div class="card-label">Storage Adder Revenue</div>
+                <div class="card-value" id="cardStorageAdder">—</div>
+                <div class="card-unit">$/year</div>
+                <span class="ref-tag" data-ref="6">[6]</span>
+            </div>
+            <div class="card money">
+                <div class="card-label">Energy Cost Offset</div>
+                <div class="card-value" id="cardCostOffset">—</div>
+                <div class="card-unit">$/year</div>
+                <span class="ref-tag" data-ref="5">[5]</span>
+            </div>
+            <div class="card money highlight">
+                <div class="card-label">Simple Payback Period</div>
+                <div class="card-value" id="cardPayback">—</div>
+                <div class="card-unit">years</div>
+            </div>
+            <div class="card money">
+                <div class="card-label">SMART Base Rate ($/kWh)</div>
+                <div class="card-value" id="cardSmartRate">$0.2821</div>
+                <div class="card-unit">PY 2025 base</div>
+                <span class="ref-tag" data-ref="6">[6]</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====== SECTION 6: Compliance Checklist ====== -->
+    <section id="compliance" class="panel">
+        <h2>Compliance &amp; Eligibility Checklist</h2>
+        <div class="checklist-columns">
+            <div class="checklist-col">
+                <h3>NFPA 855 — Energy Storage Installation <span class="ref-tag" data-ref="8">[8]</span></h3>
+                <ul class="checklist">
+                    <li class="pass">ESS units separated by minimum 3 ft (Section 15.5)</li>
+                    <li class="pass">10 ft minimum separation to means of egress</li>
+                    <li class="pass">20 ft fire department vehicle access lane</li>
+                    <li class="pass">Smoke/gas detection system required</li>
+                    <li class="pass">Thermal monitoring system required</li>
+                    <li class="pass">Fire suppression system (sprinkler or clean agent)</li>
+                    <li class="pass">Fire-resistant barriers/compartments</li>
+                    <li class="pass">UL 9540A large-scale fire testing data required</li>
+                    <li class="pass">Signage per NFPA 855 requirements</li>
+                </ul>
+            </div>
+            <div class="checklist-col">
+                <h3>MA SMART 3.0 Storage Eligibility <span class="ref-tag" data-ref="6">[6]</span></h3>
+                <ul class="checklist">
+                    <li class="pass">Storage paired with solar (required)</li>
+                    <li class="pass" id="checkDuration">Minimum 2-hour duration at rated capacity</li>
+                    <li class="pass" id="checkRTE">Round-trip efficiency ≥ 70% (LFP: ~95%)</li>
+                    <li class="pass">LiFePO4 technology (eligible)</li>
+                    <li id="checkSize" class="pass">System ≥ 1 MW for storage adder (SMART 3.0)</li>
+                    <li class="pass">UL 9540 listed system</li>
+                </ul>
+            </div>
+            <div class="checklist-col">
+                <h3>527 CMR 1.00 — MA Fire Safety Code <span class="ref-tag" data-ref="9">[9]</span></h3>
+                <ul class="checklist">
+                    <li class="pass">Chapter 52 compliance (systems &gt; 20 kWh)</li>
+                    <li class="pass">Building permit (780 CMR) required</li>
+                    <li class="pass">Fire official permit (527 CMR 1.00) required</li>
+                    <li class="pass">Wiring inspector permit (527 CMR 12.00) required</li>
+                    <li class="pass">Inverters listed per UL 1741 or UL 9540</li>
+                    <li class="pass">Local fire department review &amp; approval</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====== SECTION 7: References ====== -->
+    <section id="references" class="panel">
+        <h2>References &amp; Sources</h2>
+        <ol class="ref-list">
+            <li id="ref-1"><strong>User-specified design parameters</strong> — Annual load: 120 MWh, Solar: 191.4 kW DC, 3-day islanding, LiFePO4 technology</li>
+            <li id="ref-2"><strong>LiFePO4 Battery Characteristics</strong> — 80% recommended DoD, ~95% round-trip efficiency. Industry standard for commercial LFP systems.
+                <br><a href="https://www.nrel.gov/docs/fy25osti/93281.pdf" target="_blank">NREL Cost Projections for Utility-Scale Battery Storage (2025)</a></li>
+            <li id="ref-3"><strong>BESS Container Specifications</strong> — BYD MC Cube: 5,365 kWh, 6058×2438×2896 mm, 4,200 kg; BYD MC Cube-T: 6,432 kWh; Tesla Megapack 3: 5,000 kWh; CATL EnerOne: 3,354 kWh.
+                <br><a href="https://www.bydenergy.com/en/productDetails/Utility-Scale/MC_Cube-T_BESS" target="_blank">BYD MC Cube-T Datasheet</a>
+                <br><a href="https://www.evlithium.com/energy-storage-system-solutions/catl-enerc-plus-306-bess-container.html" target="_blank">CATL EnerC+ Specifications</a>
+                <br><a href="https://www.notebookcheck.net/BYD-doubles-Tesla-Megapack-capacity-with-record-beating-ESS-that-costs-a-cent-per-kWh.1120161.0.html" target="_blank">BYD vs Tesla Megapack Comparison</a></li>
+            <li id="ref-4"><strong>Massachusetts Solar Insolation Data</strong> — Boston monthly solar radiation (kWh/m²/day): Jan 3.92, Feb 4.66, Mar 5.01, Apr 5.42, May 5.54, Jun 5.64, Jul 6.01, Aug 5.77, Sep 5.51, Oct 4.56, Nov 3.57, Dec 3.28. Annual avg: 4.91.
+                <br><a href="https://www.solarenergylocal.com/states/massachusetts/boston/" target="_blank">Solar Energy Local — Boston, MA</a>
+                <br><a href="https://pvwatts.nrel.gov/" target="_blank">NREL PVWatts Calculator</a></li>
+            <li id="ref-5"><strong>Massachusetts Commercial Electricity Rate</strong> — Average: $0.2393/kWh (March 2026), 44.9% above national average.
+                <br><a href="https://www.chooseenergy.com/electricity-rates-by-state/" target="_blank">Choose Energy — Electricity Rates by State (March 2026)</a>
+                <br><a href="https://www.eia.gov/state/data.php?sid=MA" target="_blank">EIA — Massachusetts State Energy Data</a></li>
+            <li id="ref-6"><strong>MA SMART 3.0 Program</strong> — Base rate: $0.2821/kWh (PY 2025, 250 kW AC); Energy Storage Multiplier: $0.0265/kWh (modified Nov 2025). Storage adder requires system ≥ 1 MW (SMART 3.0). Variable rates by battery size/duration.
+                <br><a href="https://www.mass.gov/info-details/smart-30-program-details" target="_blank">Mass.gov — SMART 3.0 Program Details</a>
+                <br><a href="https://solect.com/inside-smart-3-0-how-massachusetts-revamped-its-solar-energy-storage-policy/" target="_blank">Solect Energy — Inside SMART 3.0</a>
+                <br><a href="https://www.mass.gov/doc/smart-program-year-2025-annual-report/download" target="_blank">DOER — SMART PY 2025 Annual Report (PDF)</a></li>
+            <li id="ref-7"><strong>Commercial BESS Installed Cost</strong> — Commercial-scale: $280–$580/kWh installed (2025); Containerized: $180–$320/kWh; NREL benchmark: ~$334/kWh for 4-hour systems.
+                <br><a href="https://www.nrel.gov/docs/fy25osti/93281.pdf" target="_blank">NREL — Cost Projections for Utility-Scale Battery Storage</a>
+                <br><a href="https://nextgpower.com/the-complete-bess-cost-breakdown-for-2026-avoiding-surprise-budget-pitfalls/" target="_blank">NextG Power — BESS Cost Breakdown 2026</a>
+                <br><a href="https://www.gsl-energy.com/the-real-cost-of-commercial-battery-energy-storage-in-2025-what-you-need-to-know.html" target="_blank">GSL Energy — Commercial Battery Storage Costs 2025</a></li>
+            <li id="ref-8"><strong>NFPA 855 — Installation of Stationary Energy Storage Systems</strong> — 3 ft min separation between ESS units (Section 15.5), 10 ft separation to egress, fire suppression required, UL 9540A testing data required.
+                <br><a href="https://www.nfpa.org/product/nfpa-855-standard/p0855code" target="_blank">NFPA — 855 Standard</a>
+                <br><a href="https://www.mayfield.energy/technical-articles/code-corner-nfpa-855-ess-unit-spacing-limitations/" target="_blank">Mayfield Renewables — NFPA 855 ESS Spacing</a>
+                <br><a href="https://cleanpower.org/wp-content/uploads/gateway/2024/01/NFPA855_Safety_240111.pdf" target="_blank">ACP — NFPA 855: Improving ESS Safety (PDF)</a></li>
+            <li id="ref-9"><strong>527 CMR 1.00 — Massachusetts Comprehensive Fire Safety Code</strong> — Chapter 52 regulates lithium ESS &gt; 20 kWh. Requires building permit (780 CMR), fire official permit (527 CMR 1.00), wiring inspector permit (527 CMR 12.00).
+                <br><a href="https://up.codes/viewer/massachusetts/nfpa-1-2015/chapter/52/stationary-storage-battery-systems" target="_blank">UpCodes — 527 CMR Ch. 52: Stationary Storage Battery Systems</a>
+                <br><a href="https://www.mass.gov/doc/superseding-guidance-for-energy-storage-system-ess-installations-in-one-and-two-family-dwellings-0/download" target="_blank">Mass.gov — ESS Installation Guidance (PDF)</a></li>
+            <li id="ref-10"><strong>MA Utility Interconnection</strong> — Projects must comply with utility interconnection requirements (Eversource, National Grid, or Unitil).
+                <br><a href="https://www.eversource.com/residential/save-money-energy/clean-energy-options/solar-energy/smart-program" target="_blank">Eversource — SMART Program</a></li>
+        </ol>
+    </section>
+
+</main>
+
+<footer>
+    <p>Commercial BESS Design Dashboard v1.0 — For preliminary design purposes only. Consult licensed engineers for final design. All data sourced and referenced above.</p>
+</footer>
+
+<script src="config.js"></script>
+<script src="calculations.js"></script>
+<script src="charts.js"></script>
+<script src="schematic.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

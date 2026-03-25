@@ -1,0 +1,373 @@
+/* ========================================
+   Commercial BESS Dashboard — Clean Light Theme
+   ======================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #fff;
+    color: #222;
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+/* Header */
+header {
+    background: #f9f9f9;
+    border-bottom: 1px solid #ddd;
+    padding: 1.5rem 2rem;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #222;
+}
+
+header .subtitle {
+    color: #666;
+    font-size: 0.95rem;
+    margin-top: 0.3rem;
+}
+
+header .nav-link {
+    display: inline-block;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: #0969da;
+    text-decoration: none;
+}
+
+header .nav-link:hover {
+    text-decoration: underline;
+}
+
+/* Main layout */
+main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Panel sections */
+.panel {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.panel h2 {
+    font-size: 1.15rem;
+    color: #333;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Inputs grid */
+.inputs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    position: relative;
+}
+
+.input-group label {
+    font-size: 0.8rem;
+    color: #666;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.input-group input[type="number"],
+.input-group select {
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 0.5rem 0.75rem;
+    color: #222;
+    font-size: 1rem;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.input-group input[type="number"]:focus,
+.input-group select:focus {
+    outline: none;
+    border-color: #888;
+}
+
+.input-group input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    background: #ddd;
+    border-radius: 3px;
+    outline: none;
+    margin-top: 0.3rem;
+}
+
+.input-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #555;
+    cursor: pointer;
+}
+
+.input-group output {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.95rem;
+    color: #1a7f37;
+    font-weight: 600;
+}
+
+/* Reference tags */
+.ref-tag {
+    font-size: 0.65rem;
+    color: #0969da;
+    cursor: pointer;
+    vertical-align: super;
+    text-decoration: none;
+}
+
+.ref-tag:hover {
+    text-decoration: underline;
+}
+
+/* Cards grid */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.card {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 1rem;
+    text-align: center;
+    position: relative;
+}
+
+.card.highlight {
+    border-color: #1a7f37;
+    border-width: 2px;
+}
+
+.card.money {
+    border-left: 3px solid #b35900;
+}
+
+.card.money.highlight {
+    border-left-color: #1a7f37;
+    border-color: #1a7f37;
+}
+
+.card-label {
+    font-size: 0.75rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.card-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    color: #222;
+    line-height: 1.2;
+}
+
+.card.highlight .card-value {
+    color: #1a7f37;
+}
+
+.card-unit {
+    font-size: 0.75rem;
+    color: #999;
+    margin-top: 0.3rem;
+}
+
+/* Chart */
+.chart-container {
+    position: relative;
+    height: 350px;
+    width: 100%;
+}
+
+/* Schematic */
+.schematic-container {
+    background: #fafafa;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 1rem;
+    overflow: auto;
+}
+
+#siteSchematic {
+    width: 100%;
+    max-height: 500px;
+}
+
+.footprint-info {
+    margin-top: 0.75rem;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.85rem;
+    color: #666;
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.footprint-info span {
+    color: #222;
+    font-weight: 600;
+}
+
+.note {
+    font-size: 0.8rem;
+    color: #888;
+    margin-bottom: 0.75rem;
+    font-style: italic;
+}
+
+/* Checklist */
+.checklist-columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.checklist-col h3 {
+    font-size: 0.9rem;
+    color: #333;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.checklist {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.checklist li {
+    font-size: 0.85rem;
+    color: #444;
+    padding: 0.4rem 0.6rem;
+    border-radius: 4px;
+    background: #f7f7f7;
+    position: relative;
+    padding-left: 2rem;
+}
+
+.checklist li::before {
+    position: absolute;
+    left: 0.6rem;
+    font-size: 0.9rem;
+}
+
+.checklist li.pass::before {
+    content: '\2713';
+    color: #1a7f37;
+}
+
+.checklist li.fail::before {
+    content: '\2717';
+    color: #cf222e;
+}
+
+.checklist li.warn::before {
+    content: '\26A0';
+    color: #b35900;
+}
+
+/* References */
+.ref-list {
+    padding-left: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.ref-list li {
+    font-size: 0.8rem;
+    color: #555;
+    line-height: 1.5;
+}
+
+.ref-list li strong {
+    color: #222;
+}
+
+.ref-list li a {
+    color: #0969da;
+    text-decoration: none;
+    word-break: break-all;
+}
+
+.ref-list li a:hover {
+    text-decoration: underline;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 1.5rem;
+    color: #999;
+    font-size: 0.75rem;
+    border-top: 1px solid #ddd;
+    margin-top: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 1.3rem;
+    }
+
+    .inputs-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .checklist-columns {
+        grid-template-columns: 1fr;
+    }
+
+    main {
+        padding: 0.75rem;
+    }
+}
